@@ -6,7 +6,7 @@ import { getDimensions, calculateDimensionScore, DIMENSION_NAMES } from '@/lib/q
 import type { Vertical } from '@/types/scorecard';
 import type { Question } from '@/lib/questions';
 
-const VALID_VERTICALS = ['dental', 'mortgage', 'healthcare_saas', 'fintech', 'b2c'];
+const VALID_VERTICALS = ['dental', 'mortgage', 'healthcare_saas', 'fintech', 'crm', 'erp'];
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
   return (

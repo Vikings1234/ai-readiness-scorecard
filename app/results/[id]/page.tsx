@@ -12,13 +12,46 @@ import {
   getDimensionWeight,
 } from '@/lib/scoring';
 
-const VERTICAL_LABELS: Record<string, string> = {
+const DATA_PROFILE_LABELS: Record<string, string> = {
   dental: 'Dental',
   mortgage: 'Mortgage & Lending',
   healthcare_saas: 'Healthcare SaaS',
   fintech: 'Fintech',
-  b2c: 'B2C / DTC',
+  crm: 'CRM',
+  erp: 'ERP',
 };
+
+function getDataAssetCallout(vertical: string, dim1Score: number): string | null {
+  const callouts: Record<string, { high: string; low: string }> = {
+    dental: {
+      high: 'Your patient records, imaging archives, and claim histories are a proprietary intelligence layer. Every year of digital records makes AI-powered treatment planning and practice optimization more powerful.',
+      low: 'Your dental practice has strong AI potential — the priority is digitizing and organizing patient records so the intelligence layer has complete context.',
+    },
+    mortgage: {
+      high: 'Your loan origination data, underwriting logs, and pipeline history represent years of proprietary lending intelligence. This data is among the richest sources for AI-powered risk assessment and process optimization.',
+      low: 'Your lending data has significant AI potential once loan documents are digitized and underwriting logs are systematically captured.',
+    },
+    healthcare_saas: {
+      high: 'Your EHR data, prior authorization histories, and outcome records form a proprietary clinical intelligence layer that competitors can\'t replicate.',
+      low: 'Your healthcare data has strong AI potential — the priority is structuring prior auth histories and outcome data for machine-readable access.',
+    },
+    fintech: {
+      high: 'Your transaction histories, KYC records, and behavioral data represent a proprietary intelligence layer for AI-powered fraud detection, personalization, and risk modeling.',
+      low: 'Your fintech data has significant AI potential once KYC records are structured and behavioral signals are systematically captured.',
+    },
+    crm: {
+      high: 'Your pipeline data, deal histories, activity logs, and contact records are a proprietary intelligence layer your competitors can\'t replicate. Every interaction logged is a data point that makes AI reasoning more accurate.',
+      low: 'Your CRM has strong AI potential — the priority is ensuring activity data is consistently logged so the intelligence layer has complete context.',
+    },
+    erp: {
+      high: 'Your financial records, operational data, and supply chain histories represent years of proprietary business intelligence. ERP data is among the richest sources for AI-powered forecasting and anomaly detection.',
+      low: 'Your ERP data has significant AI potential once it\'s accessible via API and integrated with your analytics layer.',
+    },
+  };
+  const entry = callouts[vertical];
+  if (!entry) return null;
+  return dim1Score >= 60 ? entry.high : entry.low;
+}
 
 function ScoreRing({
   score,
@@ -166,7 +199,7 @@ export default function ResultsPage({
   const bandColor = getScoreBandColor(band);
   const bandLabel = getScoreBandLabel(band);
   const bandSummary = getScoreBandSummary(band);
-  const verticalLabel = VERTICAL_LABELS[session.vertical] ?? session.vertical;
+  const profileLabel = DATA_PROFILE_LABELS[session.vertical] ?? session.vertical;
 
   const dimScores = [
     session.dim1_score ?? 0,
@@ -180,6 +213,7 @@ export default function ResultsPage({
   // Find strongest and weakest dimensions
   const maxDim = dimScores.indexOf(Math.max(...dimScores)) + 1;
   const minDim = dimScores.indexOf(Math.min(...dimScores)) + 1;
+  const dataAssetCallout = getDataAssetCallout(session.vertical, dimScores[0]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,7 +225,7 @@ export default function ResultsPage({
             className="px-3 py-1 rounded-full text-xs font-semibold text-white"
             style={{ backgroundColor: '#1F4E79' }}
           >
-            {verticalLabel}
+            {profileLabel}
           </span>
         </div>
       </header>
@@ -270,6 +304,22 @@ export default function ResultsPage({
         </div>
       </section>
 
+      {/* Data Asset Callout */}
+      {dataAssetCallout && (
+        <section className="px-6 pb-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-navy/5 border border-navy/10 rounded-xl p-6">
+              <h3 className="font-semibold text-navy mb-2">
+                Your {profileLabel} Data Assets
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {dataAssetCallout}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CTA */}
       <section className="px-6 pb-12">
         <div className="max-w-4xl mx-auto bg-gradient-to-r from-navy to-blue rounded-xl p-8 text-center text-white">
@@ -278,7 +328,7 @@ export default function ResultsPage({
           </h2>
           <p className="mt-2 text-blue-100 text-sm sm:text-base">
             Our full report includes prioritized recommendations, ROI estimates,
-            and a 90-day action plan tailored to your {verticalLabel.toLowerCase()} business.
+            and a 90-day action plan tailored to your {profileLabel.toLowerCase()} business.
           </p>
           <p className="mt-4 text-xs text-blue-200">
             Full report generation coming soon.

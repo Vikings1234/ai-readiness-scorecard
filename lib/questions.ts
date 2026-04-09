@@ -226,52 +226,103 @@ const dim1Fintech: Question[] = [
   },
 ];
 
-const dim1B2c: Question[] = [
+const dim1Crm: Question[] = [
   {
     id: 'd1q1',
-    text: 'Do you use a customer data platform or CRM?',
+    text: 'What is your primary CRM system?',
     type: 'radio',
     weight: 0.25,
     options: [
-      { label: 'Dedicated CDP or CRM with full purchase history', score: 1.0 },
-      { label: 'Basic CRM or e-commerce platform data', score: 0.5 },
-      { label: 'No structured customer database', score: 0 },
+      { label: 'Salesforce / HubSpot / Microsoft Dynamics', score: 1.0 },
+      { label: 'Other dedicated CRM', score: 0.5 },
+      { label: 'Spreadsheets or no CRM', score: 0 },
       { label: 'Not sure / Doesn\'t apply', score: 0 },
     ],
   },
   {
     id: 'd1q2',
-    text: 'How many years of customer purchase / behavior history do you have?',
+    text: 'How many years of deal and contact history are in your CRM?',
     type: 'radio',
     weight: 0.25,
     options: [
-      { label: '3+ years', score: 1.0 },
+      { label: '3+ years of clean data', score: 1.0 },
       { label: '1–2 years', score: 0.5 },
-      { label: 'Less than 1 year', score: 0 },
+      { label: 'Less than 1 year or inconsistent', score: 0 },
       { label: 'Not sure / Doesn\'t apply', score: 0 },
     ],
   },
   {
     id: 'd1q3',
-    text: 'Do you capture browse/click/abandonment behavior?',
+    text: 'Are activity logs captured in your CRM (calls, emails, meetings, notes)?',
     type: 'radio',
     weight: 0.25,
     options: [
-      { label: 'Yes, full behavioral tracking', score: 1.0 },
-      { label: 'Partial (e.g. purchases only)', score: 0.5 },
-      { label: 'No', score: 0 },
+      { label: 'Yes, consistently logged by the team', score: 1.0 },
+      { label: 'Partially — some reps log, some don\'t', score: 0.5 },
+      { label: 'No, minimal activity data', score: 0 },
       { label: 'Not sure / Doesn\'t apply', score: 0 },
     ],
   },
   {
     id: 'd1q4',
-    text: 'Do you have customer content — reviews, support tickets, UGC?',
+    text: 'Do you track pipeline velocity and deal stage history internally?',
     type: 'radio',
     weight: 0.25,
     options: [
-      { label: 'Yes, substantial archive', score: 1.0 },
-      { label: 'Some', score: 0.5 },
-      { label: 'No', score: 0 },
+      { label: 'Yes, systematically tracked', score: 1.0 },
+      { label: 'Informally tracked', score: 0.5 },
+      { label: 'Not tracked', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+];
+
+const dim1Erp: Question[] = [
+  {
+    id: 'd1q1',
+    text: 'What is your primary ERP system?',
+    type: 'radio',
+    weight: 0.25,
+    options: [
+      { label: 'SAP / Oracle / NetSuite / Microsoft Dynamics ERP', score: 1.0 },
+      { label: 'Mid-market ERP (Sage, Epicor, Infor, etc.)', score: 0.5 },
+      { label: 'Spreadsheets or no ERP', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd1q2',
+    text: 'How many years of financial and operational data are in your ERP?',
+    type: 'radio',
+    weight: 0.25,
+    options: [
+      { label: '5+ years', score: 1.0 },
+      { label: '2–4 years', score: 0.5 },
+      { label: 'Less than 2 years', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd1q3',
+    text: 'Does your ERP data include inventory, procurement, and supply chain records?',
+    type: 'radio',
+    weight: 0.25,
+    options: [
+      { label: 'Yes, fully integrated', score: 1.0 },
+      { label: 'Partially — some modules connected', score: 0.5 },
+      { label: 'No, financials only', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd1q4',
+    text: 'Is your ERP data accessible via API or data export for analysis?',
+    type: 'radio',
+    weight: 0.25,
+    options: [
+      { label: 'Yes, API available and used', score: 1.0 },
+      { label: 'Export capability only', score: 0.5 },
+      { label: 'No external access', score: 0 },
       { label: 'Not sure / Doesn\'t apply', score: 0 },
     ],
   },
@@ -517,7 +568,8 @@ const dim1ByVertical: Record<Vertical, Question[]> = {
   mortgage: dim1Mortgage,
   healthcare_saas: dim1HealthcareSaas,
   fintech: dim1Fintech,
-  b2c: dim1B2c,
+  crm: dim1Crm,
+  erp: dim1Erp,
 };
 
 // ---------- Public API ----------

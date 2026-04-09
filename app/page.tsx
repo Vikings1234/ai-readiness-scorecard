@@ -1,39 +1,59 @@
 'use client';
 
 import Link from 'next/link';
+import {
+  Stethoscope,
+  Home,
+  Activity,
+  TrendingUp,
+  Users,
+  Layers,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-const verticals = [
+const dataProfiles: {
+  slug: string;
+  name: string;
+  description: string;
+  icon: LucideIcon;
+}[] = [
   {
     slug: 'dental',
     name: 'Dental Practices',
     description: 'Patient records, imaging archives, and claim histories',
-    icon: '🦷',
+    icon: Stethoscope,
   },
   {
     slug: 'mortgage',
     name: 'Mortgage & Lending',
     description: 'Loan origination files, underwriting logs, and pipeline data',
-    icon: '🏠',
+    icon: Home,
   },
   {
     slug: 'healthcare_saas',
     name: 'Healthcare SaaS',
     description: 'EHR data, prior auth histories, and outcome records',
-    icon: '🏥',
+    icon: Activity,
   },
   {
     slug: 'fintech',
     name: 'Fintech',
     description: 'Transaction histories, KYC records, and behavioral data',
-    icon: '💳',
+    icon: TrendingUp,
   },
   {
-    slug: 'b2c',
-    name: 'B2C / DTC Brands',
-    description: 'Customer behavior, purchase histories, and content archives',
-    icon: '🛍️',
+    slug: 'crm',
+    name: 'CRM',
+    description: 'Pipeline data, deal history, contact records, and activity logs',
+    icon: Users,
   },
-] as const;
+  {
+    slug: 'erp',
+    name: 'ERP',
+    description: 'Financials, inventory, operations, and supply chain data',
+    icon: Layers,
+  },
+];
 
 const steps = [
   {
@@ -44,7 +64,7 @@ const steps = [
   {
     number: '02',
     title: 'Data Asset Audit',
-    description: 'We audit your proprietary data assets by vertical',
+    description: 'We audit your proprietary data assets by data profile',
   },
   {
     number: '03',
@@ -60,13 +80,18 @@ const trustItems = [
   'Your answers are private',
 ];
 
-function VerticalCard({ slug, name, description, icon }: (typeof verticals)[number]) {
+function ProfileCard({
+  slug,
+  name,
+  description,
+  icon: Icon,
+}: (typeof dataProfiles)[number]) {
   return (
     <Link
       href={`/assess/${slug}/1`}
       className="group block rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-blue hover:-translate-y-0.5"
     >
-      <div className="text-4xl mb-4">{icon}</div>
+      <Icon className="w-8 h-8 text-blue mb-4 group-hover:text-navy transition-colors" />
       <h3 className="text-lg font-semibold text-navy group-hover:text-blue transition-colors">
         {name}
       </h3>
@@ -99,18 +124,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Vertical Selector */}
+      {/* Data Profile Selector */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold text-navy sm:text-3xl">
-            Choose Your Vertical
+            Select Your Data Profile
           </h2>
           <p className="mt-3 text-center text-gray-600">
-            Select your industry to get a tailored AI readiness assessment
+            Choose the data profile that best matches your business to get a tailored AI readiness assessment
           </p>
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {verticals.map((v) => (
-              <VerticalCard key={v.slug} {...v} />
+          <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {dataProfiles.map((p) => (
+              <ProfileCard key={p.slug} {...p} />
             ))}
           </div>
         </div>
@@ -153,7 +178,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-bold text-navy sm:text-3xl">Ready to Find Out?</h2>
           <p className="mt-3 text-gray-600">
-            Pick your vertical above, or start with our most popular assessment.
+            Pick your data profile above, or start with our most popular assessment.
           </p>
           <Link
             href="/assess/dental/1"

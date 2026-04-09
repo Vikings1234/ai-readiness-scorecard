@@ -1,4 +1,4 @@
-export type Vertical = 'dental' | 'mortgage' | 'healthcare_saas' | 'fintech' | 'b2c';
+export type Vertical = 'dental' | 'mortgage' | 'healthcare_saas' | 'fintech' | 'crm' | 'erp';
 
 export type ScoreBand = 'not_ready' | 'developing' | 'ready' | 'advanced';
 
