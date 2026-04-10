@@ -231,7 +231,7 @@ const dim1Crm: Question[] = [
     id: 'd1q1',
     text: 'What is your primary CRM system?',
     type: 'radio',
-    weight: 0.25,
+    weight: 0.20,
     options: [
       { label: 'Salesforce / HubSpot / Microsoft Dynamics', score: 1.0 },
       { label: 'Other dedicated CRM', score: 0.5 },
@@ -243,19 +243,31 @@ const dim1Crm: Question[] = [
     id: 'd1q2',
     text: 'How many years of deal and contact history are in your CRM?',
     type: 'radio',
-    weight: 0.25,
+    weight: 0.20,
     options: [
-      { label: '3+ years of clean data', score: 1.0 },
-      { label: '1–2 years', score: 0.5 },
-      { label: 'Less than 1 year or inconsistent', score: 0 },
+      { label: '5+ years', score: 1.0 },
+      { label: '2–4 years', score: 0.5 },
+      { label: 'Less than 2 years', score: 0 },
       { label: 'Not sure / Doesn\'t apply', score: 0 },
     ],
   },
   {
     id: 'd1q3',
+    text: 'How would you describe the quality and consistency of that data?',
+    type: 'radio',
+    weight: 0.20,
+    options: [
+      { label: 'Clean, consistent, and well-structured', score: 1.0 },
+      { label: 'Somewhat messy but usable', score: 0.5 },
+      { label: 'Inconsistent or unreliable', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd1q4',
     text: 'Are activity logs captured in your CRM (calls, emails, meetings, notes)?',
     type: 'radio',
-    weight: 0.25,
+    weight: 0.20,
     options: [
       { label: 'Yes, consistently logged by the team', score: 1.0 },
       { label: 'Partially — some reps log, some don\'t', score: 0.5 },
@@ -264,10 +276,10 @@ const dim1Crm: Question[] = [
     ],
   },
   {
-    id: 'd1q4',
+    id: 'd1q5',
     text: 'Do you track pipeline velocity and deal stage history internally?',
     type: 'radio',
-    weight: 0.25,
+    weight: 0.20,
     options: [
       { label: 'Yes, systematically tracked', score: 1.0 },
       { label: 'Informally tracked', score: 0.5 },
@@ -328,7 +340,7 @@ const dim1Erp: Question[] = [
   },
 ];
 
-// ---------- Dimensions 2–6: Same for all verticals ----------
+// ---------- Dimensions 2–6: Shared defaults (with CRM overrides) ----------
 
 const dim2Questions: Question[] = [
   {
@@ -471,6 +483,110 @@ const dim4Questions: Question[] = [
   },
 ];
 
+// ---------- CRM-specific overrides for Dimensions 2 & 4 ----------
+
+const dim2Crm: Question[] = [
+  {
+    id: 'd2q1',
+    text: 'Where does your CRM data live?',
+    type: 'radio',
+    weight: 0.30,
+    options: [
+      { label: 'Cloud CRM with API access (Salesforce, HubSpot, etc.)', score: 1.0 },
+      { label: 'Cloud CRM, limited API or export only', score: 0.5 },
+      { label: 'On-premise or local database', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd2q2',
+    text: 'Is your CRM integrated with other sales tools (email, calendar, dialer, marketing automation)?',
+    type: 'radio',
+    weight: 0.30,
+    options: [
+      { label: 'Yes, multiple integrations active', score: 1.0 },
+      { label: 'One or two basic integrations', score: 0.5 },
+      { label: 'No integrations — CRM is standalone', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd2q3',
+    text: 'Do you have a data warehouse or BI layer connected to your CRM?',
+    type: 'radio',
+    weight: 0.20,
+    options: [
+      { label: 'Yes (Snowflake / BigQuery / Looker / Tableau / etc.)', score: 1.0 },
+      { label: 'Basic reporting (CRM dashboards / spreadsheet exports)', score: 0.5 },
+      { label: 'No analytics layer', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd2q4',
+    text: 'How automated are your internal sales operations (lead routing, follow-up sequences, reporting)?',
+    type: 'radio',
+    weight: 0.20,
+    options: [
+      { label: 'Most sales ops tasks are automated', score: 1.0 },
+      { label: 'Some automation, many manual steps remain', score: 0.5 },
+      { label: 'Almost all sales operations are manual', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+];
+
+const dim4Crm: Question[] = [
+  {
+    id: 'd4q1',
+    text: 'What percentage of your sales workflows (lead qualification, follow-ups, proposals, handoffs) are fully digital?',
+    type: 'radio',
+    weight: 0.25,
+    options: [
+      { label: '75%+ of sales workflows are digital', score: 1.0 },
+      { label: '25–74% are digital', score: 0.5 },
+      { label: 'Less than 25% are digital', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd4q2',
+    text: 'Have you automated any part of your sales process (e.g. lead scoring, email sequences, proposal generation) in the last 2 years?',
+    type: 'radio',
+    weight: 0.25,
+    options: [
+      { label: 'Yes, successfully deployed sales automation', score: 1.0 },
+      { label: 'Tried but faced challenges', score: 0.5 },
+      { label: 'No sales automation attempts', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd4q3',
+    text: 'How would you describe your highest-value manual sales processes (e.g. lead qualification, deal review, forecasting)?',
+    type: 'radio',
+    weight: 0.25,
+    options: [
+      { label: 'Repetitive and rule-based — same steps every time', score: 1.0 },
+      { label: 'Mixed — mostly consistent with some judgment calls', score: 0.5 },
+      { label: 'Highly variable — require significant rep judgment', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd4q4',
+    text: 'Do you have documented sales playbooks or SOPs for your pipeline stages?',
+    type: 'radio',
+    weight: 0.25,
+    options: [
+      { label: 'Yes, well-documented playbooks', score: 1.0 },
+      { label: 'Partially documented', score: 0.5 },
+      { label: 'Not documented — reps follow their own process', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+];
+
 const dim5Questions: Question[] = [
   {
     id: 'd5q1',
@@ -586,11 +702,14 @@ export const DIMENSION_NAMES = [
 export const DIMENSION_WEIGHTS = [0.25, 0.20, 0.15, 0.20, 0.10, 0.10] as const;
 
 export function getDimensions(vertical: Vertical): Dimension[] {
+  const dim2 = vertical === 'crm' ? dim2Crm : dim2Questions;
+  const dim4 = vertical === 'crm' ? dim4Crm : dim4Questions;
+
   return [
     { number: 1, name: DIMENSION_NAMES[0], overallWeight: DIMENSION_WEIGHTS[0], questions: dim1ByVertical[vertical] },
-    { number: 2, name: DIMENSION_NAMES[1], overallWeight: DIMENSION_WEIGHTS[1], questions: dim2Questions },
+    { number: 2, name: DIMENSION_NAMES[1], overallWeight: DIMENSION_WEIGHTS[1], questions: dim2 },
     { number: 3, name: DIMENSION_NAMES[2], overallWeight: DIMENSION_WEIGHTS[2], questions: dim3Questions },
-    { number: 4, name: DIMENSION_NAMES[3], overallWeight: DIMENSION_WEIGHTS[3], questions: dim4Questions },
+    { number: 4, name: DIMENSION_NAMES[3], overallWeight: DIMENSION_WEIGHTS[3], questions: dim4 },
     { number: 5, name: DIMENSION_NAMES[4], overallWeight: DIMENSION_WEIGHTS[4], questions: dim5Questions },
     { number: 6, name: DIMENSION_NAMES[5], overallWeight: DIMENSION_WEIGHTS[5], questions: dim6Questions },
   ];
