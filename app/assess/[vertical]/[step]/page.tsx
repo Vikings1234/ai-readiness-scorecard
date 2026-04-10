@@ -92,7 +92,16 @@ export default function AssessPage({
     const storedSession = localStorage.getItem('scorecard_session_id');
     const storedVertical = localStorage.getItem('scorecard_vertical');
 
-    if (step === 1 && storedVertical !== vertical) {
+    if (step === 1) {
+      // Clear any answers from a previous session
+      localStorage.removeItem('scorecard_session_id');
+      localStorage.removeItem('scorecard_answers');
+      localStorage.removeItem('scorecard_dim_scores');
+      localStorage.removeItem('scorecard_vertical');
+      for (let i = 1; i <= 6; i++) {
+        localStorage.removeItem(`scorecard_dim${i}_answers`);
+      }
+
       // New assessment — create session
       fetch('/api/start-session', {
         method: 'POST',
@@ -103,10 +112,6 @@ export default function AssessPage({
         .then((data) => {
           localStorage.setItem('scorecard_session_id', data.session_id);
           localStorage.setItem('scorecard_vertical', vertical);
-          // Clear any old dimension answers
-          for (let i = 1; i <= 6; i++) {
-            localStorage.removeItem(`scorecard_dim${i}_answers`);
-          }
           setSessionId(data.session_id);
           setInitialized(true);
         });
