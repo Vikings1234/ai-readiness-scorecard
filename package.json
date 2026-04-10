@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/Vikings1234/ai-readiness-scorecard#readme",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.87.0",
     "@supabase/supabase-js": "^2.103.0",
     "@types/node": "^25.5.2",
     "@types/react": "^19.2.14",

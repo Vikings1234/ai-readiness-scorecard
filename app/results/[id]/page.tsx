@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import type { ScorecardSession } from '@/types/scorecard';
 import {
@@ -138,15 +137,149 @@ function getBarColor(score: number): string {
   return '#1E6B3C';
 }
 
+// ---------- Report parsing & rendering ----------
+
+interface ParsedAction {
+  title: string;
+  description: string;
+  effort: string;
+}
+
+function parseReport(report: string): {
+  scoreMeaning: string;
+  dataAssets: string;
+  actions: ParsedAction[];
+} {
+  const sections = report.split(/\*\*(?:What Your Score Means|Your Data Assets|Your 3 Priority Actions)\*\*/);
+
+  const scoreMeaning = (sections[1] ?? '').trim();
+  const dataAssets = (sections[2] ?? '').trim();
+  const actionsRaw = (sections[3] ?? '').trim();
+
+  const actions: ParsedAction[] = [];
+  const actionRegex = /\d+\.\s*\*\*(.+?)\*\*\s*\n([\s\S]+?)(\[Quick win\]|\[1 month\]|\[3 months\])/g;
+  let match: RegExpExecArray | null;
+  while ((match = actionRegex.exec(actionsRaw)) !== null) {
+    actions.push({
+      title: match[1].trim(),
+      description: match[2].trim().replace(/\n/g, ' '),
+      effort: match[3].trim(),
+    });
+  }
+
+  return { scoreMeaning, dataAssets, actions };
+}
+
+function effortBadgeColor(effort: string): { bg: string; text: string } {
+  if (effort === '[Quick win]') return { bg: '#DEF7EC', text: '#03543F' };
+  if (effort === '[1 month]') return { bg: '#FEF3C7', text: '#92400E' };
+  return { bg: '#E0E7FF', text: '#1E3A5F' }; // [3 months] — navy
+}
+
+function ReportSection({ report }: { report: string }) {
+  const { scoreMeaning, dataAssets, actions } = parseReport(report);
+
+  return (
+    <div className="space-y-6">
+      {/* What Your Score Means */}
+      <div>
+        <h3 className="text-base font-bold text-navy mb-2">What Your Score Means</h3>
+        <p className="text-sm text-gray-700 leading-relaxed">{scoreMeaning}</p>
+      </div>
+
+      {/* Your Data Assets */}
+      <div>
+        <h3 className="text-base font-bold text-navy mb-2">Your Data Assets</h3>
+        <p className="text-sm text-gray-700 leading-relaxed">{dataAssets}</p>
+      </div>
+
+      {/* Priority Actions */}
+      <div>
+        <h3 className="text-base font-bold text-navy mb-3">Your 3 Priority Actions</h3>
+        <div className="space-y-3">
+          {actions.map((action, i) => {
+            const badge = effortBadgeColor(action.effort);
+            return (
+              <div
+                key={i}
+                className="bg-gray-50 rounded-lg border border-gray-200 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <p className="font-semibold text-navy text-sm">
+                      {i + 1}. {action.title}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">{action.description}</p>
+                  </div>
+                  <span
+                    className="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                    style={{ backgroundColor: badge.bg, color: badge.text }}
+                  >
+                    {action.effort.replace(/[[\]]/g, '')}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Attribution */}
+      <p className="text-xs text-gray-400 text-right">Powered by Claude</p>
+    </div>
+  );
+}
+
+function ReportLoading() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-4 bg-gray-200 rounded w-full" />
+      <div className="h-4 bg-gray-200 rounded w-5/6" />
+      <div className="h-8 bg-gray-100 rounded mt-6" />
+      <div className="h-4 bg-gray-200 rounded w-full" />
+      <div className="h-4 bg-gray-200 rounded w-2/3" />
+      <div className="h-8 bg-gray-100 rounded mt-6" />
+      <div className="h-20 bg-gray-100 rounded" />
+      <div className="h-20 bg-gray-100 rounded" />
+      <div className="h-20 bg-gray-100 rounded" />
+      <p className="text-sm text-gray-500 text-center pt-2">
+        Analyzing your data assets and generating your personalized report...
+      </p>
+    </div>
+  );
+}
+
 export default function ResultsPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const router = useRouter();
   const [session, setSession] = useState<ScorecardSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [report, setReport] = useState<string | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState(false);
+
+  const generateReport = useCallback(async (sessionId: string) => {
+    setReportLoading(true);
+    setReportError(false);
+    try {
+      const res = await fetch('/api/generate-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      setReport(data.report);
+    } catch {
+      setReportError(true);
+    } finally {
+      setReportLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`/api/get-results/${params.id}`)
@@ -155,14 +288,22 @@ export default function ResultsPage({
         return res.json();
       })
       .then((data) => {
-        setSession(data.session);
+        const s = data.session as ScorecardSession;
+        setSession(s);
         setLoading(false);
+
+        // If report already exists, use it; otherwise trigger generation
+        if (s.report_generated && s.claude_report) {
+          setReport(s.claude_report);
+        } else {
+          generateReport(s.id);
+        }
       })
       .catch(() => {
         setError(true);
         setLoading(false);
       });
-  }, [params.id]);
+  }, [params.id, generateReport]);
 
   if (loading) {
     return (
@@ -320,19 +461,35 @@ export default function ResultsPage({
         </section>
       )}
 
-      {/* CTA */}
-      <section className="px-6 pb-12">
-        <div className="max-w-4xl mx-auto bg-gradient-to-r from-navy to-blue rounded-xl p-8 text-center text-white">
-          <h2 className="text-xl sm:text-2xl font-bold">
-            Want a detailed AI implementation roadmap?
-          </h2>
-          <p className="mt-2 text-blue-100 text-sm sm:text-base">
-            Our full report includes prioritized recommendations, ROI estimates,
-            and a 90-day action plan tailored to your {profileLabel.toLowerCase()} business.
-          </p>
-          <p className="mt-4 text-xs text-blue-200">
-            Full report generation coming soon.
-          </p>
+      {/* AI Report */}
+      <section className="px-6 pb-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+            <h2 className="text-xl font-bold text-navy mb-1">
+              Your Personalized AI Readiness Report
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Generated by Claude based on your responses
+            </p>
+
+            {reportLoading && <ReportLoading />}
+
+            {reportError && (
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-600 mb-4">
+                  Report generation failed. Please refresh to try again.
+                </p>
+                <button
+                  onClick={() => generateReport(session.id)}
+                  className="px-5 py-2.5 bg-navy text-white text-sm font-medium rounded-lg hover:bg-blue transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {report && !reportLoading && <ReportSection report={report} />}
+          </div>
         </div>
       </section>
 

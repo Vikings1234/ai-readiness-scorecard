@@ -1,6 +1,132 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+import { getServiceSupabase } from '@/lib/supabase';
+import { getDimensions } from '@/lib/questions';
+import { getScoreBandLabel } from '@/lib/scoring';
+import type { Vertical, ScorecardSession } from '@/types/scorecard';
 
-export async function POST() {
-  // TODO: Call Claude API to generate AI readiness report
-  return NextResponse.json({ report: 'placeholder' });
+const DATA_PROFILE_LABELS: Record<Vertical, string> = {
+  dental: 'dental practice',
+  mortgage: 'mortgage lending',
+  healthcare_saas: 'healthcare SaaS',
+  fintech: 'fintech',
+  crm: 'CRM-focused sales organization',
+  erp: 'ERP-driven operations',
+};
+
+const SYSTEM_PROMPT = `You are a senior AI strategy advisor specializing in AI readiness for businesses across dental, mortgage, healthcare SaaS, fintech, CRM, and ERP. You speak directly and concretely. You never give generic advice. Every recommendation you make cites the specific data assets and operational context the business has shared. You write in plain business English — no jargon, no buzzwords, no filler phrases like 'leverage cutting-edge AI' or 'unlock the power of your data.' Format your response in clean sections using the exact structure specified.`;
+
+function formatDim1Responses(
+  session: ScorecardSession,
+  vertical: Vertical,
+): string {
+  const dimensions = getDimensions(vertical);
+  const dim1Questions = dimensions[0].questions;
+  const responses = session.responses ?? [];
+
+  return dim1Questions
+    .map((q) => {
+      const response = responses.find((r) => r.question_id === q.id);
+      if (!response) return `Q: ${q.text} → A: (no answer)`;
+      const selectedOption = q.options.find((o) => o.score === response.answer_value);
+      const answerLabel = selectedOption?.label ?? '(no answer)';
+      return `Q: ${q.text} → A: ${answerLabel}`;
+    })
+    .join('\n');
+}
+
+function buildUserPrompt(session: ScorecardSession): string {
+  const vertical = session.vertical as Vertical;
+  const profileLabel = DATA_PROFILE_LABELS[vertical];
+  const bandLabel = getScoreBandLabel(session.score_band ?? 'not_ready');
+  const dim1Responses = formatDim1Responses(session, vertical);
+
+  return `A ${profileLabel} business just completed the AI Readiness Scorecard.
+
+Overall score: ${session.overall_score}/100 (${bandLabel})
+
+Dimension scores:
+- Data Asset Inventory: ${session.dim1_score}/100
+- Technical Infrastructure: ${session.dim2_score}/100
+- Team AI Literacy: ${session.dim3_score}/100
+- Process Automation Maturity: ${session.dim4_score}/100
+- Budget & ROI Readiness: ${session.dim5_score}/100
+- Compliance & Security Posture: ${session.dim6_score}/100
+
+Their Data Asset Inventory responses:
+${dim1Responses}
+
+Write a report with exactly three sections. Use these exact bold labels as headers:
+
+**What Your Score Means**
+2-3 sentences: interpret their overall score and the pattern across their dimension scores. Be specific — call out their strongest and weakest dimensions by name.
+
+**Your Data Assets**
+3-4 sentences specific to what they answered in the Data Asset Inventory. What proprietary data do they hold? What is it worth for AI? What specific AI use cases does it unlock for a ${profileLabel} business? Cite their actual answers — do not write generic copy.
+
+**Your 3 Priority Actions**
+Exactly 3 numbered actions, ordered by impact. Each action:
+- One bold action title (5 words max)
+- One sentence explaining what to do and why
+- Effort level in brackets: [Quick win], [1 month], or [3 months]
+
+Keep the full report under 800 words. Do not use any other headers or sections beyond the three specified.`;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const sessionId = body.session_id;
+
+    if (!sessionId) {
+      return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
+    }
+
+    const supabase = getServiceSupabase();
+
+    // Fetch session
+    const { data: session, error: fetchError } = await supabase
+      .from('scorecard_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (fetchError || !session) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    // If report already generated, return cached version
+    if (session.report_generated && session.claude_report) {
+      return NextResponse.json({ report: session.claude_report });
+    }
+
+    // Call Claude API
+    const anthropic = new Anthropic();
+    const userPrompt = buildUserPrompt(session as ScorecardSession);
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      temperature: 0.4,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const reportText =
+      message.content[0].type === 'text' ? message.content[0].text : '';
+
+    // Save report to Supabase
+    const { error: updateError } = await supabase
+      .from('scorecard_sessions')
+      .update({ claude_report: reportText, report_generated: true })
+      .eq('id', sessionId);
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to save report' }, { status: 500 });
+    }
+
+    return NextResponse.json({ report: reportText });
+  } catch {
+    return NextResponse.json({ error: 'Report generation failed' }, { status: 500 });
+  }
 }
