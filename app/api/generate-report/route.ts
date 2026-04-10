@@ -16,21 +16,29 @@ const DATA_PROFILE_LABELS: Record<Vertical, string> = {
 
 const SYSTEM_PROMPT = `You are a senior AI strategy advisor specializing in AI readiness for businesses across dental, mortgage, healthcare SaaS, fintech, CRM, and ERP. You speak directly and concretely. You never give generic advice. Every recommendation you make cites the specific data assets and operational context the business has shared. You write in plain business English — no jargon, no buzzwords, no filler phrases like 'leverage cutting-edge AI' or 'unlock the power of your data.' Format your response in clean sections using the exact structure specified.`;
 
+interface SavedResponse {
+  question_id: string;
+  question_text: string;
+  selected_option: string;
+  score: number;
+}
+
 function formatDim1Responses(
   session: ScorecardSession,
   vertical: Vertical,
 ): string {
   const dimensions = getDimensions(vertical);
   const dim1Questions = dimensions[0].questions;
-  const responses = session.responses ?? [];
+
+  // responses is stored as { dim1: [...], dim2: [...], ... }
+  const rawResponses = session.responses as unknown as Record<string, SavedResponse[]> | null;
+  const dim1Responses: SavedResponse[] = rawResponses?.dim1 ?? [];
 
   return dim1Questions
     .map((q) => {
-      const response = responses.find((r) => r.question_id === q.id);
+      const response = dim1Responses.find((r) => r.question_id === q.id);
       if (!response) return `Q: ${q.text} → A: (no answer)`;
-      const selectedOption = q.options.find((o) => o.score === response.answer_value);
-      const answerLabel = selectedOption?.label ?? '(no answer)';
-      return `Q: ${q.text} → A: ${answerLabel}`;
+      return `Q: ${q.text} → A: ${response.selected_option ?? '(no answer)'}`;
     })
     .join('\n');
 }
@@ -83,6 +91,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Fetching session:', sessionId);
+    console.log('SUPABASE_URL defined:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('SERVICE_ROLE_KEY defined:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+
     const supabase = getServiceSupabase();
 
     // Fetch session
@@ -93,8 +104,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (fetchError || !session) {
-      console.error('Session fetch error:', fetchError);
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+      console.error('Session fetch error:', fetchError?.message, fetchError?.code, fetchError?.details);
+      return NextResponse.json(
+        { error: 'Session not found', details: fetchError?.message },
+        { status: 404 },
+      );
     }
 
     console.log('Session found:', session.vertical, 'score:', session.overall_score);
