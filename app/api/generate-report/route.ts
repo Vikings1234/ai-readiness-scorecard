@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
     }
 
+    console.log('Fetching session:', sessionId);
     const supabase = getServiceSupabase();
 
     // Fetch session
@@ -92,16 +93,23 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (fetchError || !session) {
+      console.error('Session fetch error:', fetchError);
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    console.log('Session found:', session.vertical, 'score:', session.overall_score);
+
     // If report already generated, return cached version
     if (session.report_generated && session.claude_report) {
+      console.log('Returning cached report');
       return NextResponse.json({ report: session.claude_report });
     }
 
     // Call Claude API
-    const anthropic = new Anthropic();
+    console.log('Calling Claude API...');
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
     const userPrompt = buildUserPrompt(session as ScorecardSession);
 
     const message = await anthropic.messages.create({
@@ -112,21 +120,30 @@ export async function POST(request: NextRequest) {
       messages: [{ role: 'user', content: userPrompt }],
     });
 
+    console.log('Claude response received');
+
     const reportText =
       message.content[0].type === 'text' ? message.content[0].text : '';
 
     // Save report to Supabase
+    console.log('Saving report to Supabase...');
     const { error: updateError } = await supabase
       .from('scorecard_sessions')
       .update({ claude_report: reportText, report_generated: true })
       .eq('id', sessionId);
 
     if (updateError) {
+      console.error('Supabase update error:', updateError);
       return NextResponse.json({ error: 'Failed to save report' }, { status: 500 });
     }
 
+    console.log('Report saved successfully');
     return NextResponse.json({ report: reportText });
-  } catch {
-    return NextResponse.json({ error: 'Report generation failed' }, { status: 500 });
+  } catch (error) {
+    console.error('generate-report error:', error);
+    return NextResponse.json(
+      { error: String(error) },
+      { status: 500 },
+    );
   }
 }
