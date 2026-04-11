@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { calculateOverallScore, getScoreBand } from '@/lib/scoring';
 
+const TOTAL_DIMENSIONS = 7;
+
 export async function POST(request: NextRequest) {
   try {
     const { session_id, dimension, responses, score } = await request.json();
 
-    if (!session_id || !dimension || dimension < 1 || dimension > 6) {
+    if (!session_id || !dimension || dimension < 1 || dimension > TOTAL_DIMENSIONS) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
@@ -15,7 +17,7 @@ export async function POST(request: NextRequest) {
     // Fetch existing session to merge responses and check dim scores
     const { data: existing } = await supabase
       .from('scorecard_sessions')
-      .select('responses, dim1_score, dim2_score, dim3_score, dim4_score, dim5_score, dim6_score')
+      .select('responses, dim1_score, dim2_score, dim3_score, dim4_score, dim5_score, dim6_score, dim7_score')
       .eq('id', session_id)
       .single();
 
@@ -30,12 +32,12 @@ export async function POST(request: NextRequest) {
       responses: mergedResponses,
     };
 
-    // If this is dimension 6, mark completed
-    if (dimension === 6) {
+    // If this is the last dimension, mark completed
+    if (dimension === TOTAL_DIMENSIONS) {
       update.completed_at = new Date().toISOString();
     }
 
-    // Check if all 6 dim scores are now populated (including the one we're saving)
+    // Check if all dim scores are now populated
     const dimScores = {
       dim1: existing?.dim1_score,
       dim2: existing?.dim2_score,
@@ -43,8 +45,8 @@ export async function POST(request: NextRequest) {
       dim4: existing?.dim4_score,
       dim5: existing?.dim5_score,
       dim6: existing?.dim6_score,
+      dim7: existing?.dim7_score,
     };
-    // Override the current dimension with the score we're saving
     (dimScores as Record<string, number | null>)[`dim${dimension}`] = score;
 
     const allPopulated = Object.values(dimScores).every(
@@ -59,9 +61,19 @@ export async function POST(request: NextRequest) {
         dim4: dimScores.dim4!,
         dim5: dimScores.dim5!,
         dim6: dimScores.dim6!,
+        dim7: dimScores.dim7!,
       });
       update.overall_score = overall;
       update.score_band = getScoreBand(overall);
+
+      // Budget hard-cap: if budget is under_10k, force Tier 1 Foundation
+      const dim5Responses = mergedResponses.dim5 as Array<{ question_id: string; selected_option: string }> | undefined;
+      if (dim5Responses) {
+        const budgetAnswer = dim5Responses.find(r => r.question_id === 'd5q1');
+        if (budgetAnswer?.selected_option === 'Under $10K') {
+          update.score_band = 'foundation';
+        }
+      }
     }
 
     const { error } = await supabase

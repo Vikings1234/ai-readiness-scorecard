@@ -74,7 +74,7 @@ export default function AssessPage({
   const step = parseInt(params.step, 10);
 
   const isValidVertical = VALID_VERTICALS.includes(vertical);
-  const isValidStep = step >= 1 && step <= 6;
+  const isValidStep = step >= 1 && step <= 7;
 
   // answers: { questionId: optionIndex }
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -98,7 +98,7 @@ export default function AssessPage({
       localStorage.removeItem('scorecard_answers');
       localStorage.removeItem('scorecard_dim_scores');
       localStorage.removeItem('scorecard_vertical');
-      for (let i = 1; i <= 6; i++) {
+      for (let i = 1; i <= 7; i++) {
         localStorage.removeItem(`scorecard_dim${i}_answers`);
       }
 
@@ -191,7 +191,7 @@ export default function AssessPage({
         }),
       });
 
-      if (step < 6) {
+      if (step < 7) {
         router.push(`/assess/${vertical}/${step + 1}`);
       } else {
         // Assessment complete — go to results
@@ -230,13 +230,13 @@ export default function AssessPage({
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-blue">
-              Step {step} of 6
+              Step {step} of 7
             </span>
             <span className="text-sm text-gray-500">
               {DIMENSION_NAMES[step - 1]}
             </span>
           </div>
-          <ProgressBar current={step} total={6} />
+          <ProgressBar current={step} total={7} />
         </div>
       </div>
 
@@ -280,7 +280,7 @@ export default function AssessPage({
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                 Saving...
               </span>
-            ) : step === 6 ? (
+            ) : step === 7 ? (
               'Complete Assessment'
             ) : (
               'Next'

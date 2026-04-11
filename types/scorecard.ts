@@ -1,6 +1,7 @@
 export type Vertical = 'dental' | 'mortgage' | 'healthcare_saas' | 'fintech' | 'crm' | 'erp';
 
-export type ScoreBand = 'not_ready' | 'developing' | 'ready' | 'advanced';
+// v2.0 tiers + legacy bands for backwards compat
+export type ScoreBand = 'foundation' | 'pilot' | 'full_build' | 'not_ready' | 'developing' | 'ready' | 'advanced';
 
 export interface ScorecardSession {
   id: string;
@@ -13,6 +14,7 @@ export interface ScorecardSession {
   dim4_score: number | null;
   dim5_score: number | null;
   dim6_score: number | null;
+  dim7_score: number | null;
   overall_score: number | null;
   score_band: ScoreBand | null;
   responses: DimensionResponse[] | null;

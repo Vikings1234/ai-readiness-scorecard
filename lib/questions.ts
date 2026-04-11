@@ -697,13 +697,73 @@ export const DIMENSION_NAMES = [
   'Process Automation Maturity',
   'Budget & ROI Readiness',
   'Compliance & Security Posture',
+  'Use Case Clarity',
 ] as const;
 
-export const DIMENSION_WEIGHTS = [0.25, 0.20, 0.15, 0.20, 0.10, 0.10] as const;
+export const DIMENSION_WEIGHTS = [0.20, 0.18, 0.15, 0.18, 0.14, 0.10, 0.05] as const;
+
+// ---------- Dimension 7: Use Case Clarity (CRM-specific + default) ----------
+
+const dim7CrmQuestions: Question[] = [
+  {
+    id: 'd7q1',
+    text: 'How specific is your highest-priority AI use case?',
+    type: 'radio',
+    weight: 0.50,
+    options: [
+      { label: 'Very specific — I know exactly which process to automate first', score: 1.0 },
+      { label: 'Exploring — I have a general area but need help narrowing down', score: 0.5 },
+      { label: 'No idea — I know AI could help but don\'t know where to start', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd7q2',
+    text: 'Which area would have the highest impact if automated with AI?',
+    type: 'radio',
+    weight: 0.50,
+    options: [
+      { label: 'Lead qualification and scoring', score: 1.0 },
+      { label: 'Follow-up and outreach automation', score: 1.0 },
+      { label: 'Pipeline forecasting and reporting', score: 1.0 },
+      { label: 'Proposal and document generation', score: 1.0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+];
+
+const dim7DefaultQuestions: Question[] = [
+  {
+    id: 'd7q1',
+    text: 'How specific is your highest-priority AI use case?',
+    type: 'radio',
+    weight: 0.50,
+    options: [
+      { label: 'Very specific — I know exactly which process to automate first', score: 1.0 },
+      { label: 'Exploring — I have a general area but need help narrowing down', score: 0.5 },
+      { label: 'No idea — I know AI could help but don\'t know where to start', score: 0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+  {
+    id: 'd7q2',
+    text: 'Which area would have the highest impact if automated with AI?',
+    type: 'radio',
+    weight: 0.50,
+    options: [
+      { label: 'Document processing and data extraction', score: 1.0 },
+      { label: 'Customer communication automation', score: 1.0 },
+      { label: 'Reporting and analytics', score: 1.0 },
+      { label: 'Compliance and risk monitoring', score: 1.0 },
+      { label: 'Not sure / Doesn\'t apply', score: 0 },
+    ],
+  },
+];
 
 export function getDimensions(vertical: Vertical): Dimension[] {
   const dim2 = vertical === 'crm' ? dim2Crm : dim2Questions;
   const dim4 = vertical === 'crm' ? dim4Crm : dim4Questions;
+  const dim7 = vertical === 'crm' ? dim7CrmQuestions : dim7DefaultQuestions;
 
   return [
     { number: 1, name: DIMENSION_NAMES[0], overallWeight: DIMENSION_WEIGHTS[0], questions: dim1ByVertical[vertical] },
@@ -712,6 +772,7 @@ export function getDimensions(vertical: Vertical): Dimension[] {
     { number: 4, name: DIMENSION_NAMES[3], overallWeight: DIMENSION_WEIGHTS[3], questions: dim4 },
     { number: 5, name: DIMENSION_NAMES[4], overallWeight: DIMENSION_WEIGHTS[4], questions: dim5Questions },
     { number: 6, name: DIMENSION_NAMES[5], overallWeight: DIMENSION_WEIGHTS[5], questions: dim6Questions },
+    { number: 7, name: DIMENSION_NAMES[6], overallWeight: DIMENSION_WEIGHTS[6], questions: dim7 },
   ];
 }
 
