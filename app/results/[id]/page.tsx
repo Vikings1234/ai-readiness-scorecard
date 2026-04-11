@@ -112,6 +112,18 @@ function effortBadgeColor(effort: string): { bg: string; text: string } {
   return { bg: '#E0E7FF', text: '#1E3A5F' };
 }
 
+function clampTierLabel(raw: string, score: number): string {
+  const allowed = ['Foundation', 'Pilot', 'Full Build'];
+  const lower = raw.toLowerCase();
+  for (const t of allowed) {
+    if (lower.includes(t.toLowerCase())) return t;
+  }
+  // Fallback: map by score
+  if (score < 40) return 'Foundation';
+  if (score < 65) return 'Pilot';
+  return 'Full Build';
+}
+
 function riskColor(level: string): string {
   if (level === 'high') return '#C00000';
   if (level === 'medium') return '#E8A000';
@@ -226,9 +238,10 @@ function ReportSectionV2({ report }: { report: ReportV2 }) {
         <h3 className="text-base font-bold text-navy mb-3">Recommended Engagement</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           {tiers.map((t) => {
-            const isActive = report.engagement.recommended_tier === t.id;
+            const recTier = (report.engagement.recommended_tier || '').toLowerCase();
+            const isActive = recTier === t.id || recTier.includes(t.id) || t.label.toLowerCase().includes(recTier);
             return (
-              <div key={t.id} className={`rounded-xl border-2 p-4 transition-all ${isActive ? 'border-blue bg-blue/5' : 'border-gray-200 opacity-40'}`}>
+              <div key={t.id} className={`rounded-xl p-4 transition-all ${isActive ? 'border-2 border-[#2E75B6] bg-[#2E75B6]/5 opacity-100' : 'border border-gray-200 opacity-40'}`}>
                 <p className="text-sm font-bold text-navy">{t.label}</p>
                 <p className="text-xs text-gray-500">{t.range} score</p>
                 {isActive && report.engagement.advancement_blockers.length > 0 && (
@@ -300,7 +313,7 @@ function ReportSectionV2({ report }: { report: ReportV2 }) {
       {/* Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Recommended Start', value: report.summary_stats.recommended_start },
+          { label: 'Recommended Start', value: clampTierLabel(report.summary_stats.recommended_start, report.score) },
           { label: 'Timeline to Pilot', value: report.summary_stats.timeline_to_pilot },
           { label: 'First Agent Target', value: report.summary_stats.first_agent_target },
           { label: 'Primary Blocker', value: report.summary_stats.primary_blocker },
